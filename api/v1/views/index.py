@@ -1,11 +1,11 @@
-#!/usr/bin/pyhton3
-"""Defines /status route"""
+#!/usr/bin/python3
+"""Index module for the API v1 views."""
+
 from flask import jsonify
 from api.v1.views import app_views
 
 
 @app_views.route('/status', methods=['GET'], strict_slashes=False)
 def status():
-    """Defines /status route on the object app_views that returns a JSON:
-        'status': 'OK'"""
+    """Return a JSON with 'status': 'OK'."""
     return jsonify({"status": "OK"})

@@ -76,3 +76,56 @@ def delete_place(place_id):
     place.delete()
     storage.save()
     return jsonify({}), 200
+
+
+@app_views.route('/places_search', methods=['POST'], strict_slashes=False)
+def places_search():
+    """Retrieves all Place objects depending of the JSON in the body of the
+    request."""
+    body = request.get_json()
+    if body is None:
+        abort(400, "Not a JSON")
+
+    # Initialize filters
+    states_ids = body.get('states', [])
+    cities_ids = body.get('cities', [])
+    amenities_ids = body.get('amenities', [])
+
+    # Collect all places if no specific filters are applied
+    if not body or (not states_ids and not cities_ids and not amenities_ids):
+        places = storage.all(Place).values()
+    else:
+        places = []
+        # Add places based on state IDs
+        if states_ids:
+            for state_id in states_ids:
+                state = storage.get("State", state_id)
+                if state:
+                    for city in state.cities:
+                        places.extend(city.places)
+        # Add places based on city IDs
+        if cities_ids:
+            for city_id in cities_ids:
+                city = storage.get("City", city_id)
+                if city and city not in [place.city for place in places]:
+                    places.extend(city.places)
+
+        # Filter places by amenities
+        def is_place_valid(place, amenities_ids):
+            """
+            Check if a place has all amenities specified by amenities_ids
+            """
+            return all(
+                    amenity.id in amenities_ids for amenity in place.amenities
+                    )
+
+        if amenities_ids:
+            places = [
+                    place for place in places if is_place_valid(
+                        place, amenities_ids
+                        )
+                    ]
+
+    # Serialize and return the filtered places
+    places_list = [place.to_dict() for place in places]
+    return jsonify(places_list)

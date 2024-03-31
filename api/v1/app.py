@@ -11,6 +11,12 @@ CORS(app, resources={r"/api/v1/*": {"origins": "*"}})
 app.register_blueprint(app_views)
 
 
+@app.errorhandler(404)
+def not_found(error):
+    """Handler for 404 errors that returns a JSON-formatted 404 response."""
+    return jsonify({"error": "Not found"}), 404
+
+
 @app.teardown_appcontext
 def close_storage(exception):
     """Closes the storage"""
